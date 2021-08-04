@@ -14,7 +14,6 @@
   "main": "background.js",
   "dependencies": {
     "core-js": "^3.6.5",
-    "dotenv": "^10.0.0",
     "find-free-port": "^2.0.0",
     "log4js": "^6.3.0",
     "ps-list": "^7.2.0",
