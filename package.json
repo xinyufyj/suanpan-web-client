@@ -4,17 +4,31 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps",
+    "electron:generate-icons": "electron-icon-builder --input=./src/assets/logo.png --output=build --flatten"
   },
+  "main": "background.js",
   "dependencies": {
     "core-js": "^3.6.5",
+    "dotenv": "^10.0.0",
+    "find-free-port": "^2.0.0",
+    "log4js": "^6.3.0",
+    "ps-list": "^7.2.0",
     "vue": "^2.6.11"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
+    "electron": "^11.0.0",
+    "electron-devtools-installer": "^3.1.0",
+    "electron-icon-builder": "^2.0.1",
     "less": "^3.0.4",
     "less-loader": "^5.0.0",
+    "vue-cli-plugin-electron-builder": "~2.1.1",
     "vue-template-compiler": "^2.6.11"
   }
 }
