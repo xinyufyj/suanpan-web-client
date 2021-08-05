@@ -5,9 +5,10 @@ import logger from './log'
 import { isDevelopment } from './utils'
 import { getWebOrigin, launchSuanpanServer, isDaemon, killSuanpanServer } from './suanpan'
 
+let win = null;
 async function createWindow() {
   // Create the browser window.
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1400,
     minWidth: 1024,
     height: 900,
