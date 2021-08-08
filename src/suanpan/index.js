@@ -18,7 +18,7 @@ export function getWebOrigin() {
 }
 
 async function findFreePort() {
-  let [freep] = await findPort(3000);
+  let [freep] = await findPort(7000);
   return freep;
 }
 
@@ -34,7 +34,7 @@ export async function launchSuanpanServer() {
         return;
       }
     }
-    await killSuanpanServer();
+    // await killSuanpanServer();
     let serverExe = isDevelopment
       ? path.join(process.cwd(), `/server/${SP_SERVER_NAME}`)
       : path.join(AppHome, `../${SP_SERVER_NAME}`);
@@ -51,13 +51,13 @@ export async function launchSuanpanServer() {
       });
     }else {
       serverProcess = spawn(SP_SERVER_NAME, {
-        detached: true,
+        // detached: true,
         stdio: "ignore",
         cwd: SP_DESKTOP_HOME,
         env: generateEnv(),
       });
     }
-    serverProcess && serverProcess.unref();
+    // serverProcess && serverProcess.unref();
     logger.info(`server spawn success`);
   } catch (e) {
     logger.error(`launch suanpan server failed ${e.message}\n${e.stack}`);
@@ -68,10 +68,10 @@ export async function launchSuanpanServer() {
 function generateEnv() {
   let defaultCfg = isDevelopment
       ? "C:\\xuelangyun\\project\\suanpan-web-client\\server\\default.js"
-      : "C:\\snapshot\\suanpan\\config\\default.js";
+      : path.join(SP_DESKTOP_HOME, "config/default.js");
     let windowsCfg = isDevelopment
       ? "C:\\xuelangyun\\project\\suanpan-web-client\\server\\windows.js"
-      : "C:\\snapshot\\suanpan\\config\\windows.js";
+      : path.join(SP_DESKTOP_HOME, "config/windows.js");
     let localCfg = isDevelopment
       ? "C:\\xuelangyun\\project\\suanpan-web-client\\server\\local.js"
       : path.join(SP_DESKTOP_HOME, "config/local.js");

@@ -30,12 +30,15 @@ async function createWindow() {
     if (process.env.WEBPACK_DEV_SERVER_URL && !process.env.IS_TEST)
       win.webContents.openDevTools();
   });
-  win.loadURL(getWebOrigin());
+  setTimeout(() => {
+    win.loadURL(getWebOrigin());
+  }, 2000);
 
   win.webContents.on(
     "new-window",
     async (event, url, frameName, disposition, options, additionalFeatures) => {
       event.preventDefault();
+      logger.info('new-window url:', url);
       Object.assign(options, {
         titleBarStyle: "default",
         frame: true,
@@ -46,20 +49,23 @@ async function createWindow() {
         height: 600,
       });
       event.newGuest.setMenuBarVisibility(false);
-      event.newGuest.loadURL(interceptUrl(url));
+      event.newGuest.loadURL(url);
     }
   );
 }
 
 function interceptUrl(url) {
+  logger.info('new-window intercept before url:', url);
   let startIdx = url.indexOf('proxr')
   if(startIdx === -1) {
     startIdx = url.indexOf('proxy')
   }
-  if(startIdx === -1) {
-    return url;
+  let newUrl = url;
+  if(startIdx > -1) {
+    newUrl = path.join(getWebOrigin(), url.slice(startIdx));
   }
-  return path.join(getWebOrigin(), url.slice(startIdx));
+  logger.info('new-window interceptUrl after url:', newUrl);
+  return newUrl;
 }
 
 // Quit when all windows are closed.
@@ -77,14 +83,14 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow()
 })
 
-app.on("will-quit", async (event) => {
-  event.preventDefault();
-  if (!isDaemon()) {
-    logger.info("terminating suanpan server");
-    await killSuanpanServer();
-  }
-  process.exit(0);
-});
+// app.on("will-quit", async (event) => {
+//   event.preventDefault();
+//   if (!isDaemon()) {
+//     // logger.info("terminating suanpan server");
+//     // await killSuanpanServer();
+//   }
+//   process.exit(0);
+// });
 
 
 // Exit cleanly on request from parent process in development mode.
