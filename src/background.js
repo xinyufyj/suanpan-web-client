@@ -1,11 +1,16 @@
 'use strict'
-import { app, BrowserWindow } from 'electron'
+import { app, protocol, BrowserWindow, ipcMain } from 'electron'
+import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
 import { isDevelopment } from './utils'
-import { getWebOrigin, launchSuanpanServer, isDaemon, killSuanpanServer } from './suanpan'
+import { getWebOrigin, launchSuanpanServer, findFreePort, checkServerSuccess } from './suanpan'
 
-let win = null;
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app', privileges: { secure: true, standard: true } }
+])
+
+let win = null, splashWin = null;
 async function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
@@ -26,13 +31,13 @@ async function createWindow() {
   })
   win.setMenuBarVisibility(false);
   win.once("ready-to-show", () => {
+    splashWin.destroy();
+    splashWin = null;
     win.show();
     if (process.env.WEBPACK_DEV_SERVER_URL && !process.env.IS_TEST)
       win.webContents.openDevTools();
   });
-  setTimeout(() => {
-    win.loadURL(getWebOrigin());
-  }, 2000);
+  win.loadURL(getWebOrigin());
 
   win.webContents.on(
     "new-window",
@@ -54,20 +59,30 @@ async function createWindow() {
   );
 }
 
-function interceptUrl(url) {
-  logger.info('new-window intercept before url:', url);
-  let startIdx = url.indexOf('proxr')
-  if(startIdx === -1) {
-    startIdx = url.indexOf('proxy')
+function createSplashWindow() {
+  splashWin = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    resizable: false,
+    show: false,
+    // alwaysOnTop: true,
+    webPreferences: {
+      // Use pluginOptions.nodeIntegration, leave this alone
+      // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
+      nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+      webSecurity: false,
+    },
+  });
+  splashWin.once("ready-to-show", () => {
+    splashWin.show();
+  });
+  if (process.env.WEBPACK_DEV_SERVER_URL) {
+    splashWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + 'splash.html');
+  } else {
+    splashWin.loadURL(`app://./splash.html`);
   }
-  let newUrl = url;
-  if(startIdx > -1) {
-    newUrl = path.join(getWebOrigin(), url.slice(startIdx));
-  }
-  logger.info('new-window interceptUrl after url:', newUrl);
-  return newUrl;
 }
-
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
   // On macOS it is common for applications and their menu bar
@@ -83,15 +98,10 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow()
 })
 
-// app.on("will-quit", async (event) => {
-//   event.preventDefault();
-//   if (!isDaemon()) {
-//     // logger.info("terminating suanpan server");
-//     // await killSuanpanServer();
-//   }
-//   process.exit(0);
-// });
-
+app.on("will-quit", async (event) => {
+  event.preventDefault();
+  process.exit(0);
+});
 
 // Exit cleanly on request from parent process in development mode.
 if (isDevelopment) {
@@ -124,8 +134,14 @@ if (isDevelopment) {
      }
    });
    app.on("ready", async () => {
+     if(!isDevelopment) {
+      createProtocol('app');
+     }
+     createSplashWindow();
+     let port = await findFreePort();
      try {
        await launchSuanpanServer();
+       await checkServerSuccess(port);
        createWindow();
      } catch (e) {
       logger.error(`launch failed ${e.message}\n${e.stack}`);

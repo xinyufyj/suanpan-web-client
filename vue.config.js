@@ -1,4 +1,10 @@
 module.exports = {
+  pages: {
+    splash: {
+      entry: "src/renderer/splash/main.js",
+      template: "public/splash.html"
+    },
+  },
   pluginOptions: {
     electronBuilder: {
       mainProcessFile: "src/background.js",
