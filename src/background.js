@@ -1,10 +1,9 @@
 'use strict'
 import { app, protocol, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
-import path from 'path'
 import logger from './log'
 import { isDevelopment } from './utils'
-import { getWebOrigin, launchSuanpanServer, findFreePort, checkServerSuccess } from './suanpan'
+import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess } from './suanpan'
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -138,7 +137,7 @@ if (isDevelopment) {
       createProtocol('app');
      }
      createSplashWindow();
-     let port = await findFreePort();
+     let port = findPort();
      try {
        await launchSuanpanServer();
        await checkServerSuccess(port);
