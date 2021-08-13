@@ -3,7 +3,7 @@ import path from "path";
 import { app } from "electron";
 import { isDevelopment } from "./utils";
 import { SP_SERVER_NAME } from "./constants";
-import { findProcessByName, killProcessByName, findProcessByPid } from "./processManager";
+import { findProcessByName, killProcessByName, findProcessByPid, killProcessByPid } from "./processManager";
 import { spawn } from "child_process";
 import http from "http";
 import ini from "ini";
@@ -11,18 +11,20 @@ import logger from "../log";
 
 const AppHome = path.join(app.getAppPath(), '../../');
 const SP_DESKTOP_HOME = path.join(AppHome, '../');
-const PortConfigPath = isDevelopment ? path.join(process.cwd(), '/server/server.ini') : path.join(SP_DESKTOP_HOME, 'server.ini');
+const ServerConfigPath = isDevelopment ? path.join(process.cwd(), '/server/server.ini') : path.join(SP_DESKTOP_HOME, 'server.ini');
 const CurrentPidPath = isDevelopment ? path.join(process.cwd(), '/server/pid.json') : path.join(AppHome, 'pid.json');
 
 let currentPort = 7000;
+let serverPid = null;
+let DAEMONIZE = false;
 
 export function getWebOrigin() {
   return `http://127.0.0.1:${currentPort}`;
 }
 
 export function findPort() {
-  if(fs.existsSync(PortConfigPath)) {
-    let iniConfig = ini.parse(fs.readFileSync(PortConfigPath, 'utf-8'));
+  if(fs.existsSync(ServerConfigPath)) {
+    let iniConfig = ini.parse(fs.readFileSync(ServerConfigPath, 'utf-8'));
     if(iniConfig && iniConfig.SP_PORT) {
       currentPort = iniConfig.SP_PORT;
     }
@@ -35,10 +37,13 @@ export async function launchSuanpanServer() {
   if(!fs.existsSync(CurrentPidPath)) {
     launchSever(); 
   }else {
-    let serverPid = fs.readFileSync(CurrentPidPath);
+    serverPid = fs.readFileSync(CurrentPidPath);
     try {
       serverPid = JSON.parse(serverPid).pid;
-      let serverProcess = await findProcessByPid(serverPid);
+      let serverProcess = [];
+      if(serverPid != null) {
+        serverProcess = await findProcessByPid(serverPid);
+      }
       if((serverProcess.length === 0) || (serverProcess[0].name != SP_SERVER_NAME)) {
         logger.info("launch Suanpan Sever as not found server process with pid: ", serverPid);
         launchSever();
@@ -80,7 +85,8 @@ function launchSever() {
       });
     }
     serverProcess.unref();
-    fs.writeFileSync(CurrentPidPath, JSON.stringify({pid: serverProcess.pid}));
+    serverPid = serverProcess.pid;
+    fs.writeFileSync(CurrentPidPath, JSON.stringify({pid: serverPid}));
     logger.info(`server spawn`);
   } catch (e) {
     logger.error(`launch suanpan server failed ${e.message}\n${e.stack}`);
@@ -107,12 +113,20 @@ function generateEnv() {
   }
 }
 
-export function isDaemon() {
-  return process.env["SERVER_DAEMON"] == "true";
+export async function killSuanpanServer() {
+  if(fs.existsSync(ServerConfigPath)) {
+    let iniConfig = ini.parse(fs.readFileSync(ServerConfigPath, 'utf-8'));
+    if(iniConfig && (iniConfig.DAEMONIZE == true || iniConfig.DAEMONIZE == 'true')) {
+      DAEMONIZE = true;
+    }
+  }
+  if(!DAEMONIZE && serverPid) {
+    await killProcessByPid(serverPid);
+  }
 }
 
-export async function killSuanpanServer() {
-  await killProcessByName(SP_SERVER_NAME);
+export function isDaemon() {
+  return process.env["SERVER_DAEMON"] == "true";
 }
 
 export async function isServerRunning() {
@@ -122,6 +136,7 @@ export async function isServerRunning() {
 
 export async function checkServerSuccess(port) {
   return new Promise((resolve, reject) => {
+    const queryInterval = 1000;
     let tryCount = 5;
     let qs = () => {
       const req = http.request(getWebOrigin(), {
@@ -140,7 +155,7 @@ export async function checkServerSuccess(port) {
         }else {
           setTimeout(() => {
             qs();
-          }, 1000);
+          }, queryInterval);
         }
       })
       req.on('timeout', err => {
@@ -150,7 +165,7 @@ export async function checkServerSuccess(port) {
         }else {
           setTimeout(() => {
             qs();
-          }, 1000);
+          }, queryInterval);
         }
       })
       req.end();

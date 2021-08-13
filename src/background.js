@@ -3,7 +3,7 @@ import { app, protocol, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import logger from './log'
 import { isDevelopment } from './utils'
-import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess } from './suanpan'
+import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, killSuanpanServer } from './suanpan'
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -99,6 +99,7 @@ app.on('activate', () => {
 
 app.on("will-quit", async (event) => {
   event.preventDefault();
+  await killSuanpanServer();
   process.exit(0);
 });
 

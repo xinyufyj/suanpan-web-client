@@ -1,4 +1,5 @@
 const psList = require('ps-list');
+import logger from "../log";
 
 async function findProcess(filter) {
   let result = [];
@@ -11,7 +12,7 @@ async function findProcess(filter) {
       }
     }
   } catch (e) {
-    console.error(`failed to query process ${e}`);
+    logger.error(`failed to query process ${e}`);
   }
   return result;
 }
@@ -27,10 +28,20 @@ export async function findProcessByName(name) {
 export async function killProcessByName(name) {
   let processes = await findProcessByName(name);
   if (processes.length > 0) {
-    console.log(`killing processes ${name}${JSON.stringify(processes)}`);
+    logger.info(`killing processes ${name}${JSON.stringify(processes)}`);
   }
   processes.forEach(killingProc => {
-    console.log(`killing process ${killingProc.pid}`);
+    logger.info(`killing process ${killingProc.pid}`);
+    process.kill(killingProc.pid, 'SIGKILL');
+  });
+}
+export async function killProcessByPid(pid) {
+  let processes = await findProcessByPid(pid);
+  if (processes.length > 0) {
+    logger.info(`killing processes ${JSON.stringify(processes)}`);
+  }
+  processes.forEach(killingProc => {
+    logger.info(`killing process ${killingProc.pid}`);
     process.kill(killingProc.pid, 'SIGKILL');
   });
 }
