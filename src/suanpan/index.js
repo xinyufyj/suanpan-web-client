@@ -96,10 +96,10 @@ function launchSever() {
 
 function generateEnv() {
   let defaultCfg = isDevelopment
-      ? "C:\\xuelangyun\\project\\suanpan-web-client\\server\\default.js"
+      ? "C:\\snapshot\\suanpan\\config\\default.js"
       : "C:\\snapshot\\suanpan\\config\\default.js";
     let windowsCfg = isDevelopment
-      ? "C:\\xuelangyun\\project\\suanpan-web-client\\server\\windows.js"
+      ? "C:\\snapshot\\suanpan\\config\\windows.js"
       : "C:\\snapshot\\suanpan\\config\\windows.js";
     let localCfg = isDevelopment
       ? "C:\\xuelangyun\\project\\suanpan-web-client\\server\\local.js"

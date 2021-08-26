@@ -99,7 +99,11 @@ app.on('activate', () => {
 
 app.on("will-quit", async (event) => {
   event.preventDefault();
-  await killSuanpanServer();
+  try {
+    await killSuanpanServer();
+  } catch (error) {
+    logger.error('kill Suanpan Server error:', error);
+  }
   process.exit(0);
 });
 
