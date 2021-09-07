@@ -80,13 +80,30 @@ function generateEnv() {
   let defaultCfg = "C:\\snapshot\\suanpan\\config\\default.js";
     let windowsCfg = "C:\\snapshot\\suanpan\\config\\windows.js";
     let localCfg = path.join(SP_DESKTOP_HOME, "config/local.js");
-  return {
+  const fixedEnv = {
     "SP_PORT": `${currentPort}`,
     "SP_DESKTOP_HOME": SP_DESKTOP_HOME,
-    "USER_ID": "shanglu",
-    "NODE_ENV": "Windows",
     "SP_CONFIG": `${defaultCfg},${windowsCfg},${localCfg}`
+  };
+  const adhocEnvs = getAdhocEnvironmentVariables();
+  return { ...fixedEnv, ...adhocEnvs };
+}
+
+function getAdhocEnvironmentVariables() {
+  const envs = {};
+  if(fs.existsSync(ServerConfigPath)) {
+    try{
+      let iniConfig = ini.parse(fs.readFileSync(ServerConfigPath, 'utf-8'));
+      if(iniConfig.env) {
+        for(const [key, value] of Object.entries(iniConfig.env)) {
+          envs[key] = `${value}`;
+        }
+      }
+    } catch(e) {
+      logger.error(`parse adhoc environment variables error ${e}`);
+    }
   }
+  return envs;
 }
 
 export async function killSuanpanServer() {
