@@ -1,9 +1,11 @@
 'use strict'
 import { app, protocol, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
+import path from 'path'
 import logger from './log'
 import { isDevelopment } from './utils'
-import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, killSuanpanServer } from './suanpan'
+import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, killSuanpanServer, reportEnvInfo } from './suanpan'
+import './downloadApi'
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -24,8 +26,9 @@ async function createWindow() {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-      contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION,
+      contextIsolation: false,
       webSecurity: false,
+      preload: path.join(__dirname, "preload.js"),
     }
   })
   win.setMenuBarVisibility(false);
@@ -59,28 +62,33 @@ async function createWindow() {
 }
 
 function createSplashWindow() {
-  splashWin = new BrowserWindow({
-    width: 400,
-    height: 300,
-    frame: false,
-    resizable: false,
-    show: false,
-    // alwaysOnTop: true,
-    webPreferences: {
-      // Use pluginOptions.nodeIntegration, leave this alone
-      // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
-      nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-      webSecurity: false,
-    },
-  });
-  splashWin.once("ready-to-show", () => {
-    splashWin.show();
-  });
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    splashWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + 'splash.html');
-  } else {
-    splashWin.loadURL(`app://./splash.html`);
-  }
+  return new Promise(resolve => {
+    splashWin = new BrowserWindow({
+      width: 700,
+      height: 500,
+      frame: false,
+      resizable: false,
+      show: false,
+      // alwaysOnTop: true,
+      webPreferences: {
+        // Use pluginOptions.nodeIntegration, leave this alone
+        // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
+        nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+        webSecurity: false,
+        contextIsolation: false,
+        preload: path.join(__dirname, "preload.js"),
+      },
+    });
+    splashWin.once("ready-to-show", () => {
+      splashWin.show();
+      resolve();
+    });
+    if (process.env.WEBPACK_DEV_SERVER_URL) {
+      splashWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + 'splash.html');
+    } else {
+      splashWin.loadURL(`app://./splash.html`);
+    }
+  })
 }
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -141,15 +149,23 @@ if (isDevelopment) {
      if(!isDevelopment) {
       createProtocol('app');
      }
-     createSplashWindow();
-     let port = findPort();
+     await createSplashWindow();
+     try {
+       reportEnvInfo();
+     } catch (e) {
+      logger.error(`report install info failed ${e.message}\n${e.stack}`);
+     }
      try {
        await launchSuanpanServer();
-       await checkServerSuccess(port);
+       await checkServerSuccess(findPort());
        createWindow();
-     } catch (e) {
-      logger.error(`launch failed ${e.message}\n${e.stack}`);
-      process.exit(-1);
-     }
+      } catch (e) {
+        logger.error(`launch failed ${e.message}\n${e.stack}`);
+        splashWin.webContents.send('error-msg', e.message || '');
+      }
    });
  }
+
+ ipcMain.on('app-quit', (evt, errorMsg) => {
+  process.exit(-1);
+ });

@@ -8,6 +8,7 @@ module.exports = {
   pluginOptions: {
     electronBuilder: {
       mainProcessFile: "src/background.js",
+      preload: "src/preload.js",
       builderOptions: {
         productName: "suanpan-client",
         linux: {

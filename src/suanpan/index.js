@@ -7,14 +7,17 @@ import { findProcessByName, killProcessByName, findProcessByPid, killProcessByPi
 import { spawn } from "child_process";
 import http from "http";
 import ini from "ini";
+import si from "systeminformation";
+import detectPort from 'detect-port'; 
 import logger from "../log";
 
 const AppHome = path.join(app.getAppPath(), '../../');
-const SP_DESKTOP_HOME = path.join(AppHome, '../');
+const SP_DESKTOP_HOME = isDevelopment ? 'C:\\xuelangyun\\suanpan-desktop' : path.join(AppHome, '../');
 const ServerConfigPath = isDevelopment ? path.join(process.cwd(), '/server/server.ini') : path.join(SP_DESKTOP_HOME, 'server.ini');
 const CurrentPidPath = isDevelopment ? path.join(process.cwd(), '/server/pid.json') : path.join(AppHome, 'pid.json');
 
 let currentPort = 7000;
+let currentVersion = '0.0.1';
 let serverPid = null;
 let DAEMONIZE = false;
 
@@ -35,75 +38,48 @@ export function findPort() {
 
 export async function launchSuanpanServer() {
   if(!fs.existsSync(CurrentPidPath)) {
-    launchSever(); 
+    await launchSever(); 
   }else {
-    serverPid = fs.readFileSync(CurrentPidPath);
-    try {
-      serverPid = JSON.parse(serverPid).pid;
-      let serverProcess = [];
-      if(serverPid != null) {
-        serverProcess = await findProcessByPid(serverPid);
-      }
-      if((serverProcess.length === 0) || (serverProcess[0].name != SP_SERVER_NAME)) {
-        logger.info("launch Suanpan Sever as not found server process with pid: ", serverPid);
-        launchSever();
-      }else {
-        logger.info("found Suanpan Sever process with pid:", serverPid);
-      }
-    }catch (e) {
-      logger.error('pid file parse error', CurrentPidPath);
-      launchSever();
+    serverPid = JSON.parse(fs.readFileSync(CurrentPidPath)).pid;
+    let serverProcess = [];
+    if(serverPid != null) {
+      serverProcess = await findProcessByPid(serverPid);
+    }
+    if((serverProcess.length === 0) || (serverProcess[0].name != SP_SERVER_NAME)) {
+      logger.info("launch Suanpan Sever as not found server process with pid: ", serverPid);
+      await launchSever();
+    }else {
+      logger.info("found Suanpan Sever process with pid:", serverPid);
     }
   }
 }
 
-function launchSever() {
-  try {    
-    let serverExe = isDevelopment
-      ? path.join(process.cwd(), `/server/${SP_SERVER_NAME}`)
-      : path.join(AppHome, `../${SP_SERVER_NAME}`);
-    logger.info(`launching suanpan server from ${serverExe}`);
-    logger.info(`SP_DESKTOP_HOME: ${SP_DESKTOP_HOME}`);
-    if (!fs.existsSync(serverExe)) {
-      throw new Error(`${serverExe} not exist`);
-    }
-    let serverProcess = null;
-    let env = generateEnv();
-    logger.info(`suanpan server env:`, JSON.stringify(env));
-    if(isDevelopment) {
-      serverProcess = spawn(serverExe, {
-        detached: true,
-        stdio: "ignore",
-        env: env,
-      });
-    }else {
-      serverProcess = spawn(SP_SERVER_NAME, {
-        detached: true,
-        stdio: "ignore",
-        cwd: SP_DESKTOP_HOME,
-        env: env,
-      });
-    }
-    serverProcess.unref();
-    serverPid = serverProcess.pid;
-    fs.writeFileSync(CurrentPidPath, JSON.stringify({pid: serverPid}));
-    logger.info(`server spawn`);
-  } catch (e) {
-    logger.error(`launch suanpan server failed ${e.message}\n${e.stack}`);
-    process.exit(-1);
+async function launchSever() {
+  await checkPortIsOccupied(currentPort)
+  let serverExe = path.join(SP_DESKTOP_HOME, SP_SERVER_NAME);
+  logger.info(`launching suanpan server from ${serverExe}`);
+  logger.info(`SP_DESKTOP_HOME: ${SP_DESKTOP_HOME}`);
+  if (!fs.existsSync(serverExe)) {
+    throw new Error(`${serverExe} not exist`);
   }
+  let env = generateEnv();
+  logger.info(`suanpan server env:`, JSON.stringify(env));
+  let serverProcess = spawn(SP_SERVER_NAME, {
+    detached: true,
+    stdio: "ignore",
+    cwd: SP_DESKTOP_HOME,
+    env: env,
+  });
+  serverProcess.unref();
+  serverPid = serverProcess.pid;
+  fs.writeFileSync(CurrentPidPath, JSON.stringify({pid: serverPid}));
+  logger.info(`server spawn`);
 }
 
 function generateEnv() {
-  let defaultCfg = isDevelopment
-      ? "C:\\snapshot\\suanpan\\config\\default.js"
-      : "C:\\snapshot\\suanpan\\config\\default.js";
-    let windowsCfg = isDevelopment
-      ? "C:\\snapshot\\suanpan\\config\\windows.js"
-      : "C:\\snapshot\\suanpan\\config\\windows.js";
-    let localCfg = isDevelopment
-      ? "C:\\xuelangyun\\project\\suanpan-web-client\\server\\local.js"
-      : path.join(SP_DESKTOP_HOME, "config/local.js");
+  let defaultCfg = "C:\\snapshot\\suanpan\\config\\default.js";
+    let windowsCfg = "C:\\snapshot\\suanpan\\config\\windows.js";
+    let localCfg = path.join(SP_DESKTOP_HOME, "config/local.js");
   return {
     "SP_PORT": `${currentPort}`,
     "SP_DESKTOP_HOME": SP_DESKTOP_HOME,
@@ -134,10 +110,26 @@ export async function isServerRunning() {
   return serverProcesses.length > 0;
 }
 
+function checkPortIsOccupied(port) {
+  return new Promise((resolve, reject) => {
+    detectPort(port, (err, _port) => {
+      if (err) {
+        reject(err);
+      }else {
+        if (port == _port) {
+          resolve(port)
+        } else {
+          reject(new Error(`端口: ${port} 被占用`));
+        }
+      }
+    });
+  })
+}
+
 export async function checkServerSuccess(port) {
   return new Promise((resolve, reject) => {
-    const queryInterval = 1000;
-    let tryCount = 5;
+    const queryInterval = 200;
+    let tryCount = 50;
     let qs = () => {
       const req = http.request(getWebOrigin(), {
         method: 'GET',
@@ -171,6 +163,49 @@ export async function checkServerSuccess(port) {
       req.end();
     }
     qs();
+  });
+}
+
+// Electron客户端启动生成uuid，后台上报装机与安装环境信息
+export function reportEnvInfo() {
+  return new Promise(async (resolve, reject) => {
+    const params = {};
+    const systemInfo = await si.system();
+    const osInfo = await si.osInfo();
+    const memInfo = await si.mem();
+    params.uuid = systemInfo.uuid;
+    params.version = currentVersion;
+    params.os = osInfo.platform;
+    Object.assign(params, {
+      manufacturer: systemInfo.manufacturer,
+      model: systemInfo.manufacturer,
+      distro: osInfo.distro,
+      arch: osInfo.arch,
+      totalMem: memInfo.total,
+      freeMem: memInfo.free
+    });
+    const postData = JSON.stringify(params);
+    const req = http.request(`http://spnext.xuelangyun.com/desktop/install/stats`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    }, res => {
+      res.on("data", ()=>{})
+      res.on("end", () => {
+        resolve();
+      });
+    });
+    req.on('error', err => {
+      reject('stats query server error', new Error('query error'));
+      logger.error('report env info error', err);
+    });
+    req.on('timeout', err => {
+      reject('stats query server timeout', new Error('timeout'));
+    });
+    req.write(postData);
+    req.end();
   });
 }
 
