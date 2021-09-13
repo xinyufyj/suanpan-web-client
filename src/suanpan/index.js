@@ -150,7 +150,7 @@ export async function checkServerSuccess(port) {
     let qs = () => {
       const req = http.request(getWebOrigin(), {
         method: 'GET',
-        timeout: 1000
+        timeout: 200
       }, res => {
         res.on("data", ()=>{})
         res.on("end", () => {
