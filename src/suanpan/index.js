@@ -86,7 +86,7 @@ function generateEnv() {
     "SP_CONFIG": `${defaultCfg},${windowsCfg},${localCfg}`
   };
   const adhocEnvs = getAdhocEnvironmentVariables();
-  return { ...fixedEnv, ...adhocEnvs };
+  return { ...process.env, ...fixedEnv, ...adhocEnvs };
 }
 
 function getAdhocEnvironmentVariables() {
