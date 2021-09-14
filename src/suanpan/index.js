@@ -8,16 +8,18 @@ import { spawn } from "child_process";
 import http from "http";
 import ini from "ini";
 import si from "systeminformation";
-import detectPort from 'detect-port'; 
+import detectPort from 'detect-port';
+import requireFromString from 'require-from-string';
 import logger from "../log";
 
 const AppHome = path.join(app.getAppPath(), '../../');
 const SP_DESKTOP_HOME = isDevelopment ? 'C:\\xuelangyun\\suanpan-desktop' : path.join(AppHome, '../');
 const ServerConfigPath = isDevelopment ? path.join(process.cwd(), '/server/server.ini') : path.join(SP_DESKTOP_HOME, 'server.ini');
 const CurrentPidPath = isDevelopment ? path.join(process.cwd(), '/server/pid.json') : path.join(AppHome, 'pid.json');
+const LocalFilePath = path.join(SP_DESKTOP_HOME, '/config/local.js');
 
 let currentPort = 7000;
-let currentVersion = '0.0.1';
+let currentVersion = 'unknown';
 let serverPid = null;
 let DAEMONIZE = false;
 
@@ -141,6 +143,20 @@ function checkPortIsOccupied(port) {
       }
     });
   })
+}
+
+export function getVersion() {
+  if(fs.existsSync(LocalFilePath)) {
+    try {
+      let obj = requireFromString(fs.readFileSync(LocalFilePath, 'utf-8'));
+      if(obj.clientVersion) {
+        currentVersion = obj.clientVersion;
+      }
+    } catch (error) {
+      logger.error('cannot get local.js', error);
+    }
+  }
+  return currentVersion;
 }
 
 export async function checkServerSuccess(port) {

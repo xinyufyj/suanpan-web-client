@@ -3,7 +3,7 @@
     <div class="content">
       <img class="logo" :src="require('@/assets/logo_new.png')">
       <img class="logo-font" :src="require('@/assets/logo_font.png')">
-      <!-- <div class="version-text">V0.0.1</div> -->
+      <div class="version-text">V{{version}}</div>
       <div class="loading-text">程序载入中{{dot}}</div>
       <div class="cr-wrap">
         <div class="cr-text">工业机器智能混合建模系统</div>
@@ -29,7 +29,8 @@ export default {
     return {
       dot: '',
       showError: false,
-      errorMsg: ''
+      errorMsg: '',
+      version: '0.0.1'
     }
   },
   created() {
@@ -37,6 +38,10 @@ export default {
       this.showError = true;
       this.errorMsg = msg;
     });
+    let version = new URLSearchParams(window.location.search).get("version");
+    if(version != 'unknown') {
+      this.version = version;
+    }
   },
   mounted() {
     this.intervalId = setInterval(() => {

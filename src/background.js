@@ -4,7 +4,7 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
 import { isDevelopment } from './utils'
-import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, killSuanpanServer, reportEnvInfo } from './suanpan'
+import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, killSuanpanServer, reportEnvInfo, getVersion } from './suanpan'
 import './downloadApi'
 
 protocol.registerSchemesAsPrivileged([
@@ -61,7 +61,7 @@ async function createWindow() {
   );
 }
 
-function createSplashWindow() {
+function createSplashWindow(clientVersion) {
   return new Promise(resolve => {
     splashWin = new BrowserWindow({
       width: 700,
@@ -84,9 +84,9 @@ function createSplashWindow() {
       resolve();
     });
     if (process.env.WEBPACK_DEV_SERVER_URL) {
-      splashWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + 'splash.html');
+      splashWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `splash.html?version=${clientVersion}`);
     } else {
-      splashWin.loadURL(`app://./splash.html`);
+      splashWin.loadURL(`app://./splash.html?version=${clientVersion}`);
     }
   })
 }
@@ -149,7 +149,7 @@ if (isDevelopment) {
      if(!isDevelopment) {
       createProtocol('app');
      }
-     await createSplashWindow();
+     await createSplashWindow(getVersion());
      try {
        reportEnvInfo();
      } catch (e) {
