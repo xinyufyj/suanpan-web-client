@@ -12,6 +12,8 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 let win = null, splashWin = null;
+let mainWinId = null;
+
 async function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
@@ -31,6 +33,7 @@ async function createWindow() {
       preload: path.join(__dirname, "preload.js"),
     }
   })
+  mainWinId = win.id;
   win.setMenuBarVisibility(false);
   win.once("ready-to-show", () => {
     splashWin.destroy();
@@ -45,17 +48,32 @@ async function createWindow() {
     "new-window",
     async (event, url, frameName, disposition, options, additionalFeatures) => {
       event.preventDefault();
-      logger.info('new-window url:', url);
-      Object.assign(options, {
-        titleBarStyle: "default",
-        frame: true,
-      });
-      event.newGuest = new BrowserWindow({
-        ...options,
-        width: 1024,
-        height: 600,
-      });
-      event.newGuest.setMenuBarVisibility(false);
+      let urlObj = new URL(url);
+      let urlId = url;
+      if(urlObj.pathname.startsWith('/run/log/')) {
+        // oss log
+        urlId = `${urlObj.origin}/run/log/`;
+      }else if(urlObj.pathname.startsWith('/dashboard')) {
+        // dashboard
+        urlId = `${urlObj.origin}/dashboard`;
+      }
+      let newWin = getNewWindow(urlId);
+      if(newWin) {
+        event.newGuest = newWin;
+        newWin.focus();
+      }else {
+        Object.assign(options, {
+          titleBarStyle: "default",
+          frame: true,
+        });
+        event.newGuest = new BrowserWindow({
+          ...options,
+          width: 1024,
+          height: 600,
+        });
+        event.newGuest._id = urlId;
+        event.newGuest.setMenuBarVisibility(false);
+      }
       event.newGuest.loadURL(url);
     }
   );
@@ -128,6 +146,16 @@ if (isDevelopment) {
       app.quit()
     })
   }
+}
+
+function getNewWindow(id) {
+  let allWins = BrowserWindow.getAllWindows();
+  for(let i = 0; i < allWins.length; i++) {
+    if(allWins[i]._id == id) {
+      return allWins[i];
+    }
+  }
+  return null;
 }
 
 /**

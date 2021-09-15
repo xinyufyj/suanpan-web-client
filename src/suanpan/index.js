@@ -161,12 +161,12 @@ export function getVersion() {
 
 export async function checkServerSuccess(port) {
   return new Promise((resolve, reject) => {
-    const queryInterval = 200;
-    let tryCount = 50;
+    const queryInterval = 100;
+    let tryCount = 100;
     let qs = () => {
       const req = http.request(getWebOrigin(), {
-        method: 'GET',
-        timeout: 200
+        method: 'HEAD',
+        timeout: 100
       }, res => {
         res.on("data", ()=>{})
         res.on("end", () => {
@@ -212,7 +212,8 @@ export function reportEnvInfo() {
     Object.assign(params, {
       manufacturer: systemInfo.manufacturer,
       model: systemInfo.manufacturer,
-      distro: osInfo.distro,
+      // distro: osInfo.distro,
+      platform: osInfo.platform,
       arch: osInfo.arch,
       totalMem: memInfo.total,
       freeMem: memInfo.free
