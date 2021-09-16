@@ -178,11 +178,9 @@ function getNewWindow(id) {
       createProtocol('app');
      }
      await createSplashWindow(getVersion());
-     try {
-       reportEnvInfo();
-     } catch (e) {
-      logger.error(`report install info failed ${e.message}\n${e.stack}`);
-     }
+      reportEnvInfo().catch(e => {
+        logger.error(`report install info failed ${e.message}`);
+      })
      try {
        await launchSuanpanServer();
        await checkServerSuccess(findPort());
