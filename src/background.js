@@ -1,9 +1,9 @@
 'use strict'
-import { app, protocol, BrowserWindow, ipcMain } from 'electron'
+import { app, protocol, BrowserWindow, ipcMain, Tray, Menu, MenuItem } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
-import { isDevelopment } from './utils'
+import { isDevelopment, trayIconPath, isWindows } from './utils'
 import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, killSuanpanServer, reportEnvInfo, getVersion } from './suanpan'
 import './downloadApi'
 
@@ -11,7 +11,7 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
 
-let win = null, splashWin = null;
+let win = null, splashWin = null, tray = null;
 let mainWinId = null;
 
 async function createWindow() {
@@ -43,6 +43,12 @@ async function createWindow() {
       win.webContents.openDevTools();
   });
   win.loadURL(getWebOrigin());
+  win.on('close', (event) => {
+    event.preventDefault();
+    if(win) {
+      win.hide();
+    }
+  })
 
   win.webContents.on(
     "new-window",
@@ -108,6 +114,53 @@ function createSplashWindow(clientVersion) {
     }
   })
 }
+
+function openMainWindow() {
+  if (win == null) {
+    createWindow();
+  } else {
+    if (win.isMinimized())  {
+      win.restore();
+    }
+    if(!win.isVisible()) {
+      win.show();
+    }
+    win.focus();
+  }
+}
+
+function createTray() {
+  // https://www.electronjs.org/docs/api/native-image#high-resolution-image
+  tray = new Tray(trayIconPath);
+  tray.on("click", () => {
+    openMainWindow();
+  });
+  if (isWindows) {
+    const contextMenu = Menu.buildFromTemplate([
+      new MenuItem({
+        label: "打开",
+        click() {
+          openMainWindow();
+        },
+      }),
+      new MenuItem({
+        label: "退出",
+        click() {
+          if(win) {
+            win.destroy();
+          }
+          if(tray) {
+            tray.destroy();
+          }
+          app.quit();
+        },
+      }),
+    ]);
+    tray.setToolTip("雪浪算盘");
+    tray.setContextMenu(contextMenu);
+  }
+}
+
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
   // On macOS it is common for applications and their menu bar
@@ -168,12 +221,10 @@ function getNewWindow(id) {
  } else {
    app.on("second-instance", (event, commandLine, workingDirectory) => {
      // Someone tried to run a second instance, we should focus our window.
-     if (win) {
-       if (win.isMinimized()) win.restore();
-       win.focus();
-     }
+     openMainWindow();
    });
    app.on("ready", async () => {
+     createTray();
      if(!isDevelopment) {
       createProtocol('app');
      }
