@@ -22,7 +22,7 @@ async function createWindow() {
     height: 900,
     minHeight: 600,
     titleBarStyle: "hidden",
-    title: '雪浪算盘',
+    title: '雪浪云 算盘',
     show: false,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
@@ -156,7 +156,7 @@ function createTray() {
         },
       }),
     ]);
-    tray.setToolTip("雪浪算盘");
+    tray.setToolTip("雪浪云 算盘");
     tray.setContextMenu(contextMenu);
   }
 }
