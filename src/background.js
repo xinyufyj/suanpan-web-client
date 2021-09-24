@@ -23,7 +23,7 @@ async function createWindow() {
     minHeight: 600,
     titleBarStyle: "hidden",
     title: '雪浪云 算盘',
-    show: false,
+    show: true,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
@@ -35,13 +35,13 @@ async function createWindow() {
   })
   mainWinId = win.id;
   win.setMenuBarVisibility(false);
-  win.once("ready-to-show", () => {
+  if(splashWin) {
     splashWin.destroy();
     splashWin = null;
-    win.show();
-    if (process.env.WEBPACK_DEV_SERVER_URL && !process.env.IS_TEST)
-      win.webContents.openDevTools();
-  });
+  }
+  if (process.env.WEBPACK_DEV_SERVER_URL && !process.env.IS_TEST) {
+    win.webContents.openDevTools();
+  }
   win.loadURL(getWebOrigin());
   win.on('close', (event) => {
     event.preventDefault();
