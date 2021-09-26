@@ -138,13 +138,13 @@ function createTray() {
   if (isWindows) {
     const contextMenu = Menu.buildFromTemplate([
       new MenuItem({
-        label: "打开",
+        label: `打开${Array(8).fill(' ').join('')}`,
         click() {
           openMainWindow();
         },
       }),
       new MenuItem({
-        label: "退出",
+        label: `退出${Array(8).fill(' ').join('')}`,
         click() {
           if(win) {
             win.destroy();
