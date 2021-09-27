@@ -4,7 +4,7 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
 import { isDevelopment, trayIconPath, isWindows } from './utils'
-import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, killSuanpanServer, reportEnvInfo, getVersion } from './suanpan'
+import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion } from './suanpan'
 import './downloadApi'
 
 protocol.registerSchemesAsPrivileged([
@@ -178,12 +178,12 @@ app.on('activate', () => {
 
 app.on("will-quit", async (event) => {
   event.preventDefault();
-  try {
-    await killSuanpanServer();
-  } catch (error) {
-    logger.error('kill Suanpan Server error:', error);
-  }
+  await cleanUpBeforeQuit();
   process.exit(0);
+});
+
+process.on('uncaughtException', function (error) {
+  logger.error('electron uncaughtException:', error.message, error.stack)
 });
 
 // Exit cleanly on request from parent process in development mode.

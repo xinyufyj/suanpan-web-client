@@ -120,10 +120,6 @@ export async function killSuanpanServer() {
   }
 }
 
-export function isDaemon() {
-  return process.env["SERVER_DAEMON"] == "true";
-}
-
 export async function isServerRunning() {
   let serverProcesses = await findProcessByName(SP_SERVER_NAME);
   return serverProcesses.length > 0;
@@ -143,6 +139,14 @@ function checkPortIsOccupied(port) {
       }
     });
   })
+}
+
+export async function cleanUpBeforeQuit() {
+  try {
+    await killSuanpanServer();
+  } catch (error) {
+    logger.error('kill Suanpan Server error:', error);
+  }
 }
 
 export function getVersion() {
