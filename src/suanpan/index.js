@@ -19,7 +19,7 @@ const CurrentPidPath = isDevelopment ? path.join(process.cwd(), '/server/pid.jso
 const LocalFilePath = path.join(SP_DESKTOP_HOME, '/config/local.js');
 
 let currentPort = 7000;
-let currentVersion = 'unknown';
+export let currentVersion = 'unknown';
 let serverPid = null;
 let DAEMONIZE = false;
 

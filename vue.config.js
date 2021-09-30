@@ -4,6 +4,10 @@ module.exports = {
       entry: "src/renderer/splash/main.js",
       template: "public/splash.html"
     },
+    dialog: {
+      entry: "src/renderer/dialog/main.js",
+      template: "public/dialog.html"
+    },
   },
   pluginOptions: {
     electronBuilder: {

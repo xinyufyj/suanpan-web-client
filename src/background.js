@@ -6,13 +6,13 @@ import logger from './log'
 import { isDevelopment, trayIconPath, isWindows } from './utils'
 import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion } from './suanpan'
 import './downloadApi'
+import { createDialogWindow } from './dialog'
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
 
 let win = null, splashWin = null, tray = null;
-let mainWinId = null;
 
 async function createWindow() {
   // Create the browser window.
@@ -33,7 +33,7 @@ async function createWindow() {
       preload: path.join(__dirname, "preload.js"),
     }
   })
-  mainWinId = win.id;
+  global.mainWin = win;
   win.setMenuBarVisibility(false);
   if(splashWin) {
     splashWin.destroy();
@@ -45,8 +45,10 @@ async function createWindow() {
   win.loadURL(getWebOrigin());
   win.on('close', (event) => {
     event.preventDefault();
-    if(win) {
-      win.hide();
+    if(!createDialogWindow(win)) {
+      if(win) {
+        win.hide();
+      } 
     }
   })
 
@@ -135,30 +137,28 @@ function createTray() {
   tray.on("click", () => {
     openMainWindow();
   });
-  if (isWindows) {
-    const contextMenu = Menu.buildFromTemplate([
-      new MenuItem({
-        label: `打开${Array(8).fill(' ').join('')}`,
-        click() {
-          openMainWindow();
-        },
-      }),
-      new MenuItem({
-        label: `退出${Array(8).fill(' ').join('')}`,
-        click() {
-          if(win) {
-            win.destroy();
-          }
-          if(tray) {
-            tray.destroy();
-          }
-          app.quit();
-        },
-      }),
-    ]);
-    tray.setToolTip("雪浪云 算盘");
-    tray.setContextMenu(contextMenu);
-  }
+  const contextMenu = Menu.buildFromTemplate([
+    new MenuItem({
+      label: `打开${Array(8).fill(' ').join('')}`,
+      click() {
+        openMainWindow();
+      },
+    }),
+    new MenuItem({
+      label: `退出${Array(8).fill(' ').join('')}`,
+      click() {
+        if(win) {
+          win.destroy();
+        }
+        if(tray) {
+          tray.destroy();
+        }
+        app.quit();
+      },
+    }),
+  ]);
+  tray.setToolTip("雪浪云 算盘");
+  tray.setContextMenu(contextMenu);
 }
 
 // Quit when all windows are closed.
@@ -224,11 +224,11 @@ function getNewWindow(id) {
      openMainWindow();
    });
    app.on("ready", async () => {
-     createTray();
-     if(!isDevelopment) {
-      createProtocol('app');
-     }
-     await createSplashWindow(getVersion());
+      createTray();
+      if(!isDevelopment) {
+        createProtocol('app');
+      }
+      await createSplashWindow(getVersion());
       reportEnvInfo().catch(e => {
         logger.error(`report install info failed ${e.message}`);
       })
