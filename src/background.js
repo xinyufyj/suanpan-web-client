@@ -3,7 +3,7 @@ import { app, protocol, BrowserWindow, ipcMain, Tray, Menu, MenuItem } from 'ele
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
-import { isDevelopment, trayIconPath, isWindows } from './utils'
+import { isDevelopment, trayIconPath, isWindows, interval } from './utils'
 import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion } from './suanpan'
 import './downloadApi'
 import { closeHandler } from './dialog'
@@ -225,9 +225,8 @@ function getNewWindow(id) {
         createProtocol('app');
       }
       await createSplashWindow(getVersion());
-      reportEnvInfo().catch(e => {
-        logger.error(`report install info failed ${e.message}`);
-      })
+      reportEnvInfo();
+      interval(reportEnvInfo, 6*3600*1000);
      try {
        await launchSuanpanServer();
        await checkServerSuccess(findPort());

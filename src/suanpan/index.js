@@ -244,6 +244,8 @@ export function reportEnvInfo() {
     });
     req.write(postData);
     req.end();
+  }).catch(e => {
+    logger.error(`report install info failed ${e.message}`);
   });
 }
 
