@@ -2,7 +2,6 @@
   <div id="app">
     <div class="container">
       <div class="content">
-        <p class="tip">应用即将进入系统托盘</p>
         <div class="ant-form-item-control">
           <span class="ant-form-item-children">
             <label class="ant-checkbox-wrapper">
@@ -10,16 +9,18 @@
                 <input
                   type="checkbox"
                   class="ant-checkbox-input"
-                  v-model="nextTimeNotShow" />
+                  v-model="nextTimeNotShow"
+                />
                 <span class="ant-checkbox-inner"></span>
               </span>
-              <span> 不再提示 </span>
+              <span> 记住我的选择，不再提醒 </span>
             </label>
           </span>
         </div>
+        <div class="buttons">
+          <button class="btn" @click="confirm('tray')">关闭至托盘</button>
+          <button class="btn ant-btn-danger" @click="confirm('quit')">退出应用</button>
         </div>
-      <div class="footer">
-        <button @click="confirm">确定</button>
       </div>
     </div>
   </div>
@@ -33,9 +34,10 @@ export default {
     };
   },
   methods: {
-    confirm() {
+    confirm(action) {
       window.ipcRenderer.send("dialog-confirm", {
         nextTimeNotShow: this.nextTimeNotShow,
+        action
       });
     },
   },
@@ -73,7 +75,7 @@ body,
       position: relative;
       line-height: 40px;
       zoom: 1;
-      color: rgba(0,0,0,.65);
+      color: rgba(0, 0, 0, 0.65);
       &::before {
         display: table;
         content: "";
@@ -85,7 +87,7 @@ body,
           box-sizing: border-box;
           margin: 0;
           padding: 0;
-          color: rgba(0,0,0,.65);
+          color: rgba(0, 0, 0, 0.65);
           font-size: 14px;
           font-variant: tabular-nums;
           line-height: 1.5;
@@ -95,7 +97,7 @@ body,
           line-height: unset;
           cursor: pointer;
         }
-        .ant-checkbox+span {
+        .ant-checkbox + span {
           padding-right: 8px;
           padding-left: 8px;
         }
@@ -104,14 +106,14 @@ body,
         box-sizing: border-box;
         margin: 0;
         padding: 0;
-        color: rgba(0,0,0,.65);
+        color: rgba(0, 0, 0, 0.65);
         font-size: 14px;
         font-variant: tabular-nums;
         line-height: 1.5;
         list-style: none;
         font-feature-settings: "tnum";
         position: relative;
-        top: -.09em;
+        top: -0.09em;
         display: inline-block;
         line-height: 1;
         white-space: nowrap;
@@ -125,7 +127,13 @@ body,
     width: 100%;
     text-align: right;
     margin-top: 20px;
-    button {
+  }
+}
+input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+}
+.btn {
       -webkit-appearance: button;
       text-shadow: 0 -1px 0 rgb(0 0 0 / 12%);
       line-height: 1.499;
@@ -159,10 +167,21 @@ body,
         border-color: #40a9ff;
       }
     }
-  }
+.buttons {
+  padding-top: 16px;
+  // width: 50%;
+  display: flex;
+  justify-content: space-around;
 }
-input[type=checkbox] {
-  width: 14px;
-  height: 14px;
+.ant-btn-danger {
+  color: #fff;
+  background-color: #ff4d4f;
+  border-color: #ff4d4f;
+  text-shadow: 0 -1px 0 rgb(0 0 0 / 12%);
+  &:hover {
+    color: #fff;
+    background-color: #d9363e;
+    border-color: #d9363e;
+  }
 }
 </style>

@@ -6,7 +6,7 @@ import logger from './log'
 import { isDevelopment, trayIconPath, isWindows } from './utils'
 import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion } from './suanpan'
 import './downloadApi'
-import { createDialogWindow } from './dialog'
+import { closeHandler } from './dialog'
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -45,11 +45,7 @@ async function createWindow() {
   win.loadURL(getWebOrigin());
   win.on('close', (event) => {
     event.preventDefault();
-    if(!createDialogWindow(win)) {
-      if(win) {
-        win.hide();
-      } 
-    }
+    closeHandler(win);
   })
 
   win.webContents.on(
