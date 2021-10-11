@@ -227,13 +227,13 @@ function getNewWindow(id) {
       await createSplashWindow(getVersion());
       reportEnvInfo();
       interval(reportEnvInfo, 6*3600*1000);
-     try {
-       await launchSuanpanServer();
-       await checkServerSuccess(findPort());
-       createWindow();
+      try {
+        await launchSuanpanServer();
+        await checkServerSuccess(findPort());
+        createWindow();
       } catch (e) {
-        logger.error(`launch failed ${e.message}\n${e.stack}`);
-        splashWin.webContents.send('error-msg', e.message || '');
+          logger.error(`launch failed ${e.message}\n${e.stack}`);
+          splashWin.webContents.send('error-msg', e.message || '');
       }
    });
  }

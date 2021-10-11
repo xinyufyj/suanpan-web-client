@@ -135,7 +135,7 @@ input[type="checkbox"] {
 }
 .btn {
       -webkit-appearance: button;
-      text-shadow: 0 -1px 0 rgb(0 0 0 / 12%);
+      // text-shadow: 0 -1px 0 rgb(0 0 0 / 12%);
       line-height: 1.499;
       position: relative;
       display: inline-block;
@@ -169,15 +169,16 @@ input[type="checkbox"] {
     }
 .buttons {
   padding-top: 16px;
+  padding-right: 40px;
   // width: 50%;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
 }
 .ant-btn-danger {
   color: #fff;
   background-color: #ff4d4f;
   border-color: #ff4d4f;
-  text-shadow: 0 -1px 0 rgb(0 0 0 / 12%);
+  // text-shadow: 0 -1px 0 rgb(0 0 0 / 12%);
   &:hover {
     color: #fff;
     background-color: #d9363e;
