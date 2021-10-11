@@ -1,5 +1,5 @@
 'use strict'
-import { app, protocol, BrowserWindow, ipcMain, Tray, Menu, MenuItem } from 'electron'
+import { app, protocol, BrowserWindow, ipcMain, Tray, Menu, MenuItem, dialog } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
@@ -114,6 +114,9 @@ function createSplashWindow(clientVersion) {
 }
 
 function openMainWindow() {
+  if(splashWin) {
+    return;
+  }
   if (win == null) {
     createWindow();
   } else {
@@ -241,3 +244,34 @@ function getNewWindow(id) {
  ipcMain.on('app-quit', (evt, errorMsg) => {
   process.exit(-1);
  });
+
+ ipcMain.on('client-dialog-confirm', function(evt, str) {
+  let result = false;
+  let opts = {
+    type: 'warning',
+    buttons: ['确认', '取消'],
+    defaultId: 0,
+    cancelId: 1,
+    detail: '',
+    message: str
+  };
+  let flag = dialog.showMessageBoxSync(win, opts);
+  if(flag == 0) {
+    result = true;
+  }else {
+    result = false;
+  }
+  evt.returnValue = result;
+})
+
+ipcMain.on('client-dialog-alert', function(evt, str) {
+  let opts = {
+    type: 'warning',
+    buttons: ['确认'],
+    defaultId: 0,
+    cancelId: 0,
+    detail: str,
+    message: ''
+  };
+  evt.returnValue = dialog.showMessageBoxSync(win, opts);
+})
