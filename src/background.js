@@ -4,7 +4,7 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
 import { isDevelopment, trayIconPath, isWindows, interval } from './utils'
-import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion } from './suanpan'
+import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion, getOsInfo } from './suanpan'
 import './downloadApi'
 import { closeHandler } from './dialog'
 
@@ -274,4 +274,15 @@ ipcMain.on('client-dialog-alert', function(evt, str) {
     message: ''
   };
   evt.returnValue = dialog.showMessageBoxSync(win, opts);
+})
+
+ipcMain.handle('client-uuid', function(evt) {
+  return new Promise(async (resolve) => {
+    let uuid = 'unknown';
+    try {
+      uuid = (await getOsInfo()).uuid
+    } catch (error) {
+    }
+    resolve(uuid);
+  }) 
 })

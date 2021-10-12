@@ -203,6 +203,10 @@ export async function checkServerSuccess(port) {
   });
 }
 
+export async function getOsInfo() {
+  return await si.system();
+}
+
 // Electron客户端启动生成uuid，后台上报装机与安装环境信息
 export function reportEnvInfo() {
   return new Promise(async (resolve, reject) => {
