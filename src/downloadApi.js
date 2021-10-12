@@ -5,7 +5,6 @@ import fs from 'fs'
 import logger from "./log";
 import { isDevelopment } from './utils';
 import { findProcessByName } from './suanpan/processManager';
-import { cleanUpBeforeQuit } from './suanpan'
 import { spawn } from "child_process";
  
  // 下载
@@ -126,13 +125,15 @@ ipcMain.handle("client-download-install", function() {
           })
         }else {
           try {
-            let installerProcess = spawn(data.path, {
+            let installerProcess = spawn('update.exe', {
               detached: true,
-              stdio: "ignore"
+              stdio: "ignore",
+              cwd: process.resourcesPath,
+              env: {
+                SP_INSTALLER: data.path
+              }
             });
             installerProcess.unref();
-            await cleanUpBeforeQuit();
-            process.exit(0);
           } catch (error) {
             logger.error(`install update installer error: ${error}`)
             resolve({
@@ -140,6 +141,10 @@ ipcMain.handle("client-download-install", function() {
               errorCode: 'UNKNOWN'
             })
           }
+          if(global.mainWin) {
+            global.mainWin.destroy();
+          }
+          app.quit();
         }
       })
     }

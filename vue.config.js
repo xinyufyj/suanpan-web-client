@@ -27,6 +27,10 @@ module.exports = {
             from: "./src/assets/",
             to: "assets",
             filter: ["**/*"]
+          },
+          {
+            from: "./src/update/dist/update.exe",
+            to: "update.exe"
           }
         ],
         directories: {
