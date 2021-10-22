@@ -1,5 +1,5 @@
 'use strict'
-import { app, protocol, BrowserWindow, ipcMain, Tray, Menu, MenuItem, dialog } from 'electron'
+import { app, protocol, BrowserWindow, ipcMain, Tray, Menu, MenuItem, dialog, shell } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
@@ -52,6 +52,11 @@ async function createWindow() {
     "new-window",
     async (event, url, frameName, disposition, options, additionalFeatures) => {
       event.preventDefault();
+      // use native browser open
+      if(url.indexOf('xuelangyun.yuque.com/docs') > -1) {
+        shell.openExternal(url)
+        return
+      }
       let urlObj = new URL(url);
       let urlId = url;
       if(urlObj.pathname.startsWith('/run/log/')) {
