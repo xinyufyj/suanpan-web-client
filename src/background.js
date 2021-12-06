@@ -3,7 +3,7 @@ import { app, protocol, BrowserWindow, ipcMain, Tray, Menu, MenuItem, dialog, sh
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
-import { isDevelopment, trayIconPath, isWindows, interval } from './utils'
+import { isDevelopment, trayIconPath, isWindows, interval, checkRedis, checkMinio } from './utils'
 import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion, getOsInfo } from './suanpan'
 import './downloadApi'
 import { closeHandler } from './dialog'
@@ -236,6 +236,7 @@ function getNewWindow(id) {
       reportEnvInfo();
       interval(reportEnvInfo, 6*3600*1000);
       try {
+        await Promise.all([checkRedis(), checkMinio()])
         await launchSuanpanServer();
         await checkServerSuccess(findPort());
         createWindow();
