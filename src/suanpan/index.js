@@ -27,7 +27,7 @@ export function getWebOrigin() {
   return `http://127.0.0.1:${currentPort}`;
 }
 
-export function findPort() {
+function findPort() {
   if(fs.existsSync(ServerConfigPath)) {
     let iniConfig = ini.parse(fs.readFileSync(ServerConfigPath, 'utf-8'));
     if(iniConfig && iniConfig.SP_PORT) {
@@ -57,6 +57,7 @@ export async function launchSuanpanServer() {
 }
 
 async function launchSever() {
+  findPort()
   await checkPortIsOccupied(currentPort)
   let serverExe = path.join(SP_DESKTOP_HOME, SP_SERVER_NAME);
   logger.info(`launching suanpan server from ${serverExe}`);
@@ -163,7 +164,7 @@ export function getVersion() {
   return currentVersion;
 }
 
-export async function checkServerSuccess(port) {
+export async function checkServerSuccess() {
   return new Promise((resolve, reject) => {
     const queryInterval = 100;
     let tryCount = 100;

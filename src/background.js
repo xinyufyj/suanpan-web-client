@@ -4,7 +4,7 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
 import { isDevelopment, trayIconPath, isWindows, interval, checkRedis, checkMinio } from './utils'
-import { getWebOrigin, launchSuanpanServer, findPort, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion, getOsInfo } from './suanpan'
+import { getWebOrigin, launchSuanpanServer, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion, getOsInfo } from './suanpan'
 import './downloadApi'
 import { closeHandler } from './dialog'
 
@@ -238,7 +238,7 @@ function getNewWindow(id) {
       try {
         await Promise.all([checkRedis(), checkMinio()])
         await launchSuanpanServer();
-        await checkServerSuccess(findPort());
+        await checkServerSuccess();
         createWindow();
       } catch (e) {
           logger.error(`launch failed ${e.message}\n${e.stack}`);
