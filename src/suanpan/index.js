@@ -11,6 +11,7 @@ import si from "systeminformation";
 import detectPort from 'detect-port';
 import requireFromString from 'require-from-string';
 import logger from "../log";
+import findProcess from 'find-process'
 
 const AppHome = path.join(app.getAppPath(), '../../');
 const SP_DESKTOP_HOME = isDevelopment ? 'C:\\xuelangyun\\suanpan-desktop' : path.join(AppHome, '../');
@@ -19,6 +20,8 @@ const CurrentPidPath = isDevelopment ? path.join(process.cwd(), '/server/pid.jso
 const LocalFilePath = path.join(SP_DESKTOP_HOME, '/config/local.js');
 
 let currentPort = 7000;
+let redisPort = 16379;
+let minioPort = 19000;
 export let currentVersion = 'unknown';
 let serverPid = null;
 let DAEMONIZE = false;
@@ -157,6 +160,12 @@ export function getVersion() {
       if(obj.clientVersion) {
         currentVersion = obj.clientVersion;
       }
+      if(obj.oss && obj.oss.port) {
+        minioPort = obj.oss.port
+      }
+      if(obj.redis && obj.redis.port) {
+        redisPort = obj.redis.port
+      }
     } catch (error) {
       logger.error('cannot get local.js', error);
     }
@@ -254,3 +263,36 @@ export function reportEnvInfo() {
   });
 }
 
+// check redis
+export function checkRedis() {
+  return new Promise((resolve, reject) => {
+    let errMsg = '消息队列服务没有正常运行';
+    findProcess('port', redisPort)
+      .then(list => {
+        if((list.length > 0) && (list[0].name === 'redis-server.exe')) {
+          resolve()
+        }else {
+          reject(new Error(errMsg))
+        }
+      }).catch(err => {
+        reject(new Error(errMsg))
+      })
+  })
+}
+
+// check minio
+export function checkMinio() {
+  return new Promise((resolve, reject) => {
+    let errMsg = '对象存储服务没有正常运行';
+    findProcess('port', minioPort)
+      .then(list => {
+        if((list.length > 0) && (list[0].name === 'minio.exe')) {
+          resolve()
+        }else {
+          reject(new Error(errMsg))
+        }
+      }).catch(err => {
+        reject(new Error(errMsg))
+      })
+  })
+}

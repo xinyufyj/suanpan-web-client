@@ -3,8 +3,8 @@ import { app, protocol, BrowserWindow, ipcMain, Tray, Menu, MenuItem, dialog, sh
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import path from 'path'
 import logger from './log'
-import { isDevelopment, trayIconPath, isWindows, interval, checkRedis, checkMinio } from './utils'
-import { getWebOrigin, launchSuanpanServer, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion, getOsInfo } from './suanpan'
+import { isDevelopment, trayIconPath, isWindows, interval } from './utils'
+import { getWebOrigin, launchSuanpanServer, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion, getOsInfo, checkRedis, checkMinio } from './suanpan'
 import './downloadApi'
 import { closeHandler } from './dialog'
 
