@@ -42,6 +42,7 @@ function findPort() {
 }
 
 export async function launchSuanpanServer() {
+  findPort()
   if(!fs.existsSync(CurrentPidPath)) {
     await launchSever(); 
   }else {
@@ -60,7 +61,6 @@ export async function launchSuanpanServer() {
 }
 
 async function launchSever() {
-  findPort()
   await checkPortIsOccupied(currentPort)
   let serverExe = path.join(SP_DESKTOP_HOME, SP_SERVER_NAME);
   logger.info(`launching suanpan server from ${serverExe}`);
@@ -112,14 +112,14 @@ function getAdhocEnvironmentVariables() {
   return envs;
 }
 
-export async function killSuanpanServer() {
-  if(fs.existsSync(ServerConfigPath)) {
+export async function killSuanpanServer(forceKillServer=false) {
+  if(!forceKillServer && fs.existsSync(ServerConfigPath)) {
     let iniConfig = ini.parse(fs.readFileSync(ServerConfigPath, 'utf-8'));
     if(iniConfig && (iniConfig.DAEMONIZE == true || iniConfig.DAEMONIZE == 'true')) {
       DAEMONIZE = true;
     }
   }
-  if(!DAEMONIZE && serverPid) {
+  if((!DAEMONIZE || forceKillServer) && serverPid) {
     await killProcessByPid(serverPid);
   }
 }
@@ -145,9 +145,9 @@ function checkPortIsOccupied(port) {
   })
 }
 
-export async function cleanUpBeforeQuit() {
+export async function cleanUpBeforeQuit(forceKillServer=false) {
   try {
-    await killSuanpanServer();
+    await killSuanpanServer(forceKillServer);
   } catch (error) {
     logger.error('kill Suanpan Server error:', error);
   }
@@ -190,7 +190,7 @@ export async function checkServerSuccess() {
       req.on('error', err => {
         tryCount--;
         if(tryCount < 0) {
-          reject('query server error', new Error('query error'));
+          reject(new Error('query server error'));
         }else {
           setTimeout(() => {
             qs();
@@ -200,7 +200,7 @@ export async function checkServerSuccess() {
       req.on('timeout', err => {
         tryCount--;
         if(tryCount < 0) {
-          reject('query server timeout', new Error('timeout'));
+          reject(new Error('query server timeout'));
         }else {
           setTimeout(() => {
             qs();

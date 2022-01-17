@@ -247,7 +247,8 @@ function getNewWindow(id) {
    });
  }
 
- ipcMain.on('app-quit', (evt, errorMsg) => {
+ ipcMain.on('app-quit', async (evt, errorMsg) => {
+  await cleanUpBeforeQuit(true);
   process.exit(-1);
  });
 
