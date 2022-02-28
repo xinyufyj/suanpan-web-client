@@ -99,8 +99,11 @@ function handler() {
 }
 
 function quitApp() {
-  if(global.mainWin) {
-    global.mainWin.destroy();
-  }
-  app.quit();
+  // if(global.mainWin) {
+  //   global.mainWin.destroy();
+  // }
+  // app.quit();
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.destroy();
+  })
 }

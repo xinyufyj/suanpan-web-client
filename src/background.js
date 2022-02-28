@@ -5,6 +5,7 @@ import path from 'path'
 import logger from './log'
 import { isDevelopment, trayIconPath, isWindows, interval } from './utils'
 import { getWebOrigin, launchSuanpanServer, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion, getOsInfo, checkRedis, checkMinio } from './suanpan'
+import './api'
 import './downloadApi'
 import { closeHandler } from './dialog'
 
@@ -151,13 +152,16 @@ function createTray() {
     new MenuItem({
       label: `退出${Array(8).fill(' ').join('')}`,
       click() {
-        if(win) {
-          win.destroy();
-        }
         if(tray) {
           tray.destroy();
         }
-        app.quit();
+        // if(win) {
+        //   win.destroy();
+        // }
+        // app.quit();
+        BrowserWindow.getAllWindows().forEach(win => {
+          win.destroy();
+        })
       },
     }),
   ]);
@@ -182,6 +186,9 @@ app.on('activate', () => {
 
 app.on("will-quit", async (event) => {
   event.preventDefault();
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.hide()
+  })
   await cleanUpBeforeQuit();
   process.exit(0);
 });

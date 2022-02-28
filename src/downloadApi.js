@@ -141,10 +141,13 @@ ipcMain.handle("client-download-install", function() {
               errorCode: 'UNKNOWN'
             })
           }
-          if(global.mainWin) {
-            global.mainWin.destroy();
-          }
-          app.quit();
+          // if(global.mainWin) {
+          //   global.mainWin.destroy();
+          // }
+          // app.quit();
+          BrowserWindow.getAllWindows().forEach(win => {
+            win.destroy();
+          })
         }
       })
     }

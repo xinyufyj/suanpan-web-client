@@ -147,6 +147,7 @@ function checkPortIsOccupied(port) {
 
 export async function cleanUpBeforeQuit(forceKillServer=false) {
   try {
+    await desktopExit();
     await killSuanpanServer(forceKillServer);
   } catch (error) {
     logger.error('kill Suanpan Server error:', error);
@@ -295,4 +296,28 @@ export function checkMinio() {
         reject(new Error(errMsg))
       })
   })
+}
+
+export async function desktopExit() {
+  return new Promise((resolve, reject) => {
+    let qs = () => {
+      const req = http.request(`${getWebOrigin()}/desktop/exit`, {
+        method: 'GET',
+        timeout: 1000
+      }, res => {
+        res.on("data", ()=>{})
+        res.on("end", () => {
+          resolve();
+        });
+      });
+      req.on('error', err => {
+        reject(new Error(`/desktop/exit query error: ${err}`));
+      })
+      req.on('timeout', err => {
+        reject(new Error('/desktop/exit query timeout'));
+      })
+      req.end();
+    }
+    qs();
+  });
 }

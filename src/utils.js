@@ -1,5 +1,6 @@
 import path from 'path';
 import { app } from 'electron'
+import CryptoJS from 'crypto-js'
 
 export const isDevelopment = process.env.NODE_ENV !== 'production';
 export const isWindows = process.platform === 'win32';
@@ -35,4 +36,12 @@ export const AppHome = path.join(app.getAppPath(), '../../');
     wrapFn();
   }, wait);
   return wrapFn;
+}
+
+export function encrypt(text, key) {
+  return CryptoJS.AES.encrypt(text, key).toString();
+}
+
+export function decrypt (text, key) {
+  return CryptoJS.AES.decrypt(text, key).toString(CryptoJS.enc.Utf8);
 }
