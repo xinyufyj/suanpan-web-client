@@ -241,7 +241,7 @@ function getNewWindow(id) {
       }
       await createSplashWindow(getVersion());
       reportEnvInfo();
-      interval(reportEnvInfo, 2*3600*1000);
+      interval(reportEnvInfo, 1*3600*1000);
       try {
         await Promise.all([checkRedis(), checkMinio()])
         await launchSuanpanServer();
