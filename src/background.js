@@ -7,7 +7,7 @@ import { isDevelopment, trayIconPath, isWindows, interval } from './utils'
 import { getWebOrigin, launchSuanpanServer, checkServerSuccess, cleanUpBeforeQuit, reportEnvInfo, getVersion, getOsInfo, checkRedis, checkMinio } from './suanpan'
 import './api'
 import './downloadApi'
-import { closeHandler } from './dialog'
+import { closeHandler, quitApp } from './dialog'
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -22,7 +22,6 @@ async function createWindow() {
     minWidth: 1024,
     height: 900,
     minHeight: 600,
-    titleBarStyle: "hidden",
     title: '雪浪云 算盘',
     show: true,
     webPreferences: {
@@ -152,16 +151,7 @@ function createTray() {
     new MenuItem({
       label: `退出${Array(8).fill(' ').join('')}`,
       click() {
-        if(tray) {
-          tray.destroy();
-        }
-        // if(win) {
-        //   win.destroy();
-        // }
-        // app.quit();
-        BrowserWindow.getAllWindows().forEach(win => {
-          win.destroy();
-        })
+        quitApp(win)
       },
     }),
   ]);
@@ -183,15 +173,6 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) createWindow()
 })
-
-app.on("will-quit", async (event) => {
-  event.preventDefault();
-  BrowserWindow.getAllWindows().forEach(win => {
-    win.hide()
-  })
-  await cleanUpBeforeQuit();
-  process.exit(0);
-});
 
 process.on('uncaughtException', function (error) {
   logger.error('electron uncaughtException:', error.message, error.stack)
@@ -256,7 +237,7 @@ function getNewWindow(id) {
 
  ipcMain.on('app-quit', async (evt, errorMsg) => {
   await cleanUpBeforeQuit(true);
-  process.exit(-1);
+  process.exit(errorMsg ? -1 : 0);
  });
 
  ipcMain.on('client-dialog-confirm', function(evt, str) {

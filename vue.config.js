@@ -8,6 +8,10 @@ module.exports = {
       entry: "src/renderer/dialog/main.js",
       template: "public/dialog.html"
     },
+    close: {
+      entry: "src/renderer/close/main.js",
+      template: "public/splash.html"
+    }
   },
   pluginOptions: {
     electronBuilder: {

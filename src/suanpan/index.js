@@ -16,10 +16,14 @@ import findProcess from 'find-process'
 const AppHome = path.join(app.getAppPath(), '../../');
 const SP_DESKTOP_HOME = isDevelopment ? 'C:\\xuelangyun\\suanpan-desktop' : path.join(AppHome, '../');
 const ServerConfigPath = isDevelopment ? path.join(process.cwd(), '/server/server.ini') : path.join(SP_DESKTOP_HOME, 'server.ini');
+let ServerIniConfig = null
+if(fs.existsSync(ServerConfigPath)) {
+  ServerIniConfig = ini.parse(fs.readFileSync(ServerConfigPath, 'utf-8'));
+}
 const CurrentPidPath = isDevelopment ? path.join(process.cwd(), '/server/pid.json') : path.join(AppHome, 'pid.json');
 const LocalFilePath = path.join(SP_DESKTOP_HOME, '/config/local.js');
 
-let currentPort = 7000;
+export let currentPort = 7000;
 let redisPort = 16379;
 let minioPort = 19000;
 export let currentVersion = 'unknown';
@@ -31,11 +35,8 @@ export function getWebOrigin() {
 }
 
 function findPort() {
-  if(fs.existsSync(ServerConfigPath)) {
-    let iniConfig = ini.parse(fs.readFileSync(ServerConfigPath, 'utf-8'));
-    if(iniConfig && iniConfig.SP_PORT) {
-      currentPort = iniConfig.SP_PORT;
-    }
+  if(ServerIniConfig && ServerIniConfig.SP_PORT) {
+    currentPort = ServerIniConfig.SP_PORT;
   }
   logger.info("current server port:", currentPort);
   return currentPort;
@@ -43,6 +44,9 @@ function findPort() {
 
 export async function launchSuanpanServer() {
   findPort()
+  if(ServerIniConfig && (ServerIniConfig.NotLaunchBackend === true || ServerIniConfig.NotLaunchBackend === 'true')) {
+    return
+  }
   if(!fs.existsSync(CurrentPidPath)) {
     await launchSever(); 
   }else {
@@ -97,25 +101,17 @@ function generateEnv() {
 
 function getAdhocEnvironmentVariables() {
   const envs = {};
-  if(fs.existsSync(ServerConfigPath)) {
-    try{
-      let iniConfig = ini.parse(fs.readFileSync(ServerConfigPath, 'utf-8'));
-      if(iniConfig.env) {
-        for(const [key, value] of Object.entries(iniConfig.env)) {
-          envs[key] = `${value}`;
-        }
-      }
-    } catch(e) {
-      logger.error(`parse adhoc environment variables error ${e}`);
+  if(ServerIniConfig && ServerIniConfig.env) {
+    for(const [key, value] of Object.entries(ServerIniConfig.env)) {
+      envs[key] = `${value}`;
     }
   }
   return envs;
 }
 
 export async function killSuanpanServer(forceKillServer=false) {
-  if(!forceKillServer && fs.existsSync(ServerConfigPath)) {
-    let iniConfig = ini.parse(fs.readFileSync(ServerConfigPath, 'utf-8'));
-    if(iniConfig && (iniConfig.DAEMONIZE == true || iniConfig.DAEMONIZE == 'true')) {
+  if(!forceKillServer) {
+    if(ServerIniConfig && (ServerIniConfig.DAEMONIZE === true || ServerIniConfig.DAEMONIZE === 'true')) {
       DAEMONIZE = true;
     }
   }
@@ -147,7 +143,6 @@ function checkPortIsOccupied(port) {
 
 export async function cleanUpBeforeQuit(forceKillServer=false) {
   try {
-    await desktopExit();
     await killSuanpanServer(forceKillServer);
   } catch (error) {
     logger.error('kill Suanpan Server error:', error);
@@ -181,7 +176,7 @@ export async function checkServerSuccess() {
     let qs = () => {
       const req = http.request(getWebOrigin(), {
         method: 'HEAD',
-        timeout: 100
+        timeout: 250
       }, res => {
         res.on("data", ()=>{})
         res.on("end", () => {
@@ -296,28 +291,4 @@ export function checkMinio() {
         reject(new Error(errMsg))
       })
   })
-}
-
-export async function desktopExit() {
-  return new Promise((resolve, reject) => {
-    let qs = () => {
-      const req = http.request(`${getWebOrigin()}/desktop/exit`, {
-        method: 'GET',
-        timeout: 1000
-      }, res => {
-        res.on("data", ()=>{})
-        res.on("end", () => {
-          resolve();
-        });
-      });
-      req.on('error', err => {
-        reject(new Error(`/desktop/exit query error: ${err}`));
-      })
-      req.on('timeout', err => {
-        reject(new Error('/desktop/exit query timeout'));
-      })
-      req.end();
-    }
-    qs();
-  });
 }
