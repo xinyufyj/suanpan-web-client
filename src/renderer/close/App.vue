@@ -1,8 +1,11 @@
 <template>
   <div id="app" class="drag">
     <div class="container">
-      <div class="loader"></div>
-      <div class="message">程序退出中...</div>
+      <img class="loader" :src="require('../../assets/close-loading.webp')" />
+      <div class="message">
+        <div class="main">正在退出雪浪算盘...</div>
+        <div class="sub">停止所有运行中的项目后，将自动退出程序。</div>
+      </div>
     </div>
   </div>
 </template>
@@ -11,7 +14,9 @@
 export default {
   name: 'App',
   data() {
-    return {}
+    return {
+      exitStopAll: false
+    }
   },
   created() {
     let search = new URLSearchParams(window.location.search);
@@ -19,6 +24,7 @@ export default {
     let exitStopAll = search.get("exitStopAll")
     let host = `http://127.0.0.1:${port}`
     if(exitStopAll === 'true') {
+      this.exitStopAll = true
       this.stopAll(host).catch(err => {
         console.error('/app/stop/all', err)
       }).finally(() => {
@@ -39,7 +45,7 @@ export default {
         new Promise((resolve) =>
             setTimeout(() => {
               resolve()
-            }, 1000)
+            }, 1500)
         )
       ]);
     },
@@ -70,23 +76,38 @@ body,
   overflow: hidden;
 }
 .container {
+  height: 100%;
   user-select: none;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  flex-direction: row;
+  justify-content: center;
 }
 .loader {
-  margin-top: 50px;
-  border: 16px solid #f3f3f3; /* Light grey */
-  border-top: 16px solid #1890ff; /* Blue */
-  border-radius: 50%;
-  width: 100px;
-  height: 100px;
-  animation: spin 2s linear infinite;
+  width: 60px;
+  height: 60px;
+  // margin-top: 50px;
+  // border: 16px solid #f3f3f3; /* Light grey */
+  // border-top: 16px solid #1890ff; /* Blue */
+  // border-radius: 50%;
+  // width: 100px;
+  // height: 100px;
+  // animation: spin 2s linear infinite;
 }
 .message {
-  margin-top: 20px;
-  font-size: 16px;
+  margin-left: 20px;
+  // font-size: 16px;
+  .main {
+    font-size: 16px;
+    color: #1D2129;
+    font-weight: bold;
+    line-height: 24px;
+  }
+  .sub {
+    font-size: 12px;
+    color: #4E5969;
+    line-height: 20px;
+  }
 }
 
 @keyframes spin {

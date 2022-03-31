@@ -15,11 +15,11 @@ export function closeHandler(win) {
       return
     }
     let winBound = win.getBounds();
-    let DialogWidth = 350, DialogHeight = 200;
+    let DialogWidth = 408, DialogHeight = 320;
     let x = (winBound.width - DialogWidth) * 0.5 + winBound.x;
     let y = 50 +  winBound.y;
     dialogWin = new BrowserWindow({
-      title: '提示',
+      title: '退出设置',
       width: DialogWidth,
       height: DialogHeight,
       x: x,
@@ -41,6 +41,7 @@ export function closeHandler(win) {
     dialogWin.setMenuBarVisibility(false);
     if (process.env.WEBPACK_DEV_SERVER_URL) {
       dialogWin.loadURL(process.env.WEBPACK_DEV_SERVER_URL + `dialog.html`);
+      // dialogWin.webContents.openDevTools();
     } else {
       dialogWin.loadURL(`app://./dialog.html`);
     }
@@ -93,7 +94,7 @@ export function quitApp(win) {
     ipcMain.removeAllListeners(uuid);
     let exitStopAll = res.data.exitStopAll === true
     let winBound = win.getBounds();
-    let CloseWidth = 450, CloseHeight = 320;
+    let CloseWidth = 380, CloseHeight = 88;
     let x = (winBound.width - CloseWidth) * 0.5 + winBound.x;
     let y = (winBound.height - CloseHeight) * 0.5 + winBound.y - 80;
     closeWin = new BrowserWindow({
