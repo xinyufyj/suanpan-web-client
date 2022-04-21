@@ -233,7 +233,7 @@ export function reportEnvInfo() {
       freeMem: memInfo.free
     });
     const postData = JSON.stringify(params);
-    const req = http.request(`http://spnext.xuelangyun.com/desktop/install/stats`, {
+    const req = http.request(`https://spnext.xuelangyun.com/desktop/install/stats`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
