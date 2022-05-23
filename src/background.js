@@ -65,6 +65,9 @@ async function createWindow() {
       }else if(urlObj.pathname.startsWith('/dashboard')) {
         // dashboard
         urlId = `${urlObj.origin}/dashboard`;
+      }else if(urlObj.pathname.startsWith('/proxr')){
+        // component page
+        urlId = `${urlObj.origin}/proxr`;
       }
       let newWin = getNewWindow(urlId);
       if(newWin) {
