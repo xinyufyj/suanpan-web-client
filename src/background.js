@@ -8,6 +8,7 @@ import { getWebOrigin, launchSuanpanServer, checkServerSuccess, cleanUpBeforeQui
 import './api'
 import './downloadApi'
 import { closeHandler, quitApp } from './dialog'
+import { spdCheck, spdFix } from './suanpan/spd'
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -227,20 +228,39 @@ function getNewWindow(id) {
       reportEnvInfo();
       interval(reportEnvInfo, 1*3600*1000);
       try {
-        await Promise.all([checkRedis(), checkMinio()])
-        await launchSuanpanServer();
-        await checkServerSuccess();
-        createWindow();
+        await spdCheck();
+        await launch()
       } catch (e) {
-          logger.error(`launch failed ${e.message}\n${e.stack}`);
-          splashWin.webContents.send('error-msg', e.message || '');
+        logger.error(`spd check error: ${e.message}`);
+        splashWin.webContents.send('error-msg', true, e.message || '');
       }
    });
  }
 
+async function launch() {
+  try {
+    await launchSuanpanServer();
+    await checkServerSuccess();
+    createWindow();
+  } catch (e) {
+    logger.error(`launch failed ${e.message}\n${e.stack}`);
+    splashWin.webContents.send('error-msg', false, e.message || '');
+  }
+}
+
  ipcMain.on('app-quit', async (evt, errorMsg) => {
   await cleanUpBeforeQuit(true);
   process.exit(errorMsg ? -1 : 0);
+ });
+
+ ipcMain.on('app-fix', async (evt, errorMsg) => {
+  try {
+    await spdFix()
+    await launch()
+  }catch(e) {
+    logger.error(`launch failed ${e.message}\n${e.stack}`);
+    splashWin.webContents.send('error-msg', false, e.message || '');
+  }
  });
 
  ipcMain.on('client-dialog-confirm', function(evt, str) {

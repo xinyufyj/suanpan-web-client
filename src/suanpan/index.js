@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { app } from "electron";
-import { isDevelopment } from "./utils";
+import { isDevelopment, AppHome, SP_DESKTOP_HOME } from "./utils";
 import { SP_SERVER_NAME } from "./constants";
 import { findProcessByName, killProcessByName, findProcessByPid, killProcessByPid } from "./processManager";
 import { spawn } from "child_process";
@@ -13,8 +12,7 @@ import requireFromString from 'require-from-string';
 import logger from "../log";
 import findProcess from 'find-process'
 
-const AppHome = path.join(app.getAppPath(), '../../');
-const SP_DESKTOP_HOME = isDevelopment ? 'C:\\xuelangyun\\suanpan-desktop' : path.join(AppHome, '../');
+
 const ServerConfigPath = isDevelopment ? path.join(process.cwd(), '/server/server.ini') : path.join(SP_DESKTOP_HOME, 'server.ini');
 let ServerIniConfig = null
 if(fs.existsSync(ServerConfigPath)) {

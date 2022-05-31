@@ -15,8 +15,11 @@
         <div>
           <p class="error-msg" :title="errorMsg">{{ errorMsg }}</p>
         </div>
-        <div>
-          <button class="error-btn" @click="quit">确定</button>
+        <div v-if="!canfix">
+          <button class="btn error-btn" @click="quit">确定</button>
+        </div>
+        <div v-if="canfix">
+          <button class="btn fix-btn" @click="fix" :disabled="fixing">{{ fixing ? '修复中...' : '修复' }}</button>
         </div>
       </div>
     </div>
@@ -30,13 +33,17 @@ export default {
       dot: '',
       showError: false,
       errorMsg: '',
-      version: '0.0.1'
+      version: '0.0.1',
+      canfix: false,
+      fixing: false
     }
   },
   created() {
-    window.ipcRenderer.on('error-msg', (evt, msg) => {
+    window.ipcRenderer.on('error-msg', (evt, canfix, msg) => {
+      this.fixing = false
       this.showError = true;
       this.errorMsg = msg;
+      this.canfix = canfix
     });
     let version = new URLSearchParams(window.location.search).get("version");
     if(version != 'unknown') {
@@ -68,6 +75,10 @@ export default {
   methods: {
     quit() {
       window.ipcRenderer.send('app-quit', this.errorMsg);
+    },
+    fix() {
+      this.fixing = true
+      window.ipcRenderer.send('app-fix');
     }
   }
 }
@@ -152,10 +163,27 @@ img {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.error-btn {
+.btn {
   margin-top: 40px;
   width: 80px;
   padding: 5px 0;
   cursor: pointer;
+  border: 0;
+}
+.error-btn {
+  
+}
+.fix-btn {
+  background: #1890ff;
+  color: #fff;
+}
+.fix-btn:hover {
+  background: #40a9ff;
+}
+.fix-btn[disabled] {
+  color: rgba(0, 0, 0, 0.4);
+  background: #f5f5f5;
+  cursor: not-allowed;
+  border: 1px solid #d9d9d9;
 }
 </style>
