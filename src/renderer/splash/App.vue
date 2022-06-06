@@ -16,7 +16,7 @@
           <p class="error-msg" :title="errorMsg">{{ errorMsg }}</p>
         </div>
         <div v-if="!canfix">
-          <button class="btn error-btn" @click="quit">确定</button>
+          <button class="btn error-btn" @click="quit">退出</button>
         </div>
         <div v-if="canfix">
           <button class="btn fix-btn" @click="fix" :disabled="fixing">{{ fixing ? '修复中...' : '修复' }}</button>

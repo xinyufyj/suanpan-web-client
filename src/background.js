@@ -232,7 +232,7 @@ function getNewWindow(id) {
         await launch()
       } catch (e) {
         logger.error(`spd check error: ${e.message}`);
-        splashWin.webContents.send('error-msg', true, e.message || '');
+        splashWin.webContents.send('error-msg', (e.code === 2), e.message || '');
       }
    });
  }
